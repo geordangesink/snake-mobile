@@ -11,7 +11,6 @@ import {
   View
 } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
-import { reloadAppAsync } from 'expo-modules-core'
 import * as SplashScreen from 'expo-splash-screen'
 import PearRuntime from 'pear-mobile'
 import FramedStream from 'framed-stream'
@@ -25,6 +24,7 @@ import { SetupScreen } from './screens/SetupScreen'
 import { GameScreen } from './screens/GameScreen'
 import { UpdateBanner, UpdateStatus } from './components/UpdateBanner'
 import { AnimatedSplash } from './components/AnimatedSplash'
+import { restartAfterUpdate } from './restart-after-update'
 import { theme } from './theme'
 
 const appName = productName ?? name
@@ -109,7 +109,8 @@ export default function App() {
         break
       case 'updateApplied':
         if (shouldReload.current) {
-          reloadAppAsync('Pear update applied').catch((err) => {
+          shouldReload.current = false
+          restartAfterUpdate().catch((err) => {
             setError(err instanceof Error ? err.message : String(err))
             setUpdateStatus('failed')
           })

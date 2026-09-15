@@ -73,7 +73,11 @@ In development (`npm run ios` / `npm run android`) the app passes `__DEV__` to t
 
 ## OTA updates & deploy
 
-OTA behaves exactly as in [hello-pear-react-native](../hello-pear-react-native) — the worker replicates the seeded application drive behind the `upgrade` link, emits `updating` / `updated`, and applies the new bundle on request. Full flow:
+The worker replicates the seeded application drive behind the `upgrade` link, emits `updating` / `updated`, and applies the new bundle on request.
+
+After applying an update, Android restarts the app process so the native host selects the new bundle. iOS reloads JavaScript. Android automatic restart requires a native build containing `react-native-restart`; older binaries display a message to close and reopen the app after applying the update.
+
+Build the OTA payload:
 
 ```sh
 npm run update   # bundle:bare + bundle:react-native + build → dist/
