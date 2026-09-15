@@ -110,10 +110,14 @@ export default function App() {
       case 'updateApplied':
         if (shouldReload.current) {
           shouldReload.current = false
-          restartAfterUpdate().catch((err) => {
-            setError(err instanceof Error ? err.message : String(err))
-            setUpdateStatus('failed')
-          })
+          restartAfterUpdate()
+            .then((restarted) => {
+              if (!restarted) setUpdateStatus('applied')
+            })
+            .catch((err) => {
+              setError(err instanceof Error ? err.message : String(err))
+              setUpdateStatus('failed')
+            })
         } else {
           setUpdateStatus('')
         }

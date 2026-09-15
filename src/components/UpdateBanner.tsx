@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { theme } from '../theme'
 import { canOpenStore, openStore, storeName } from '../store-link'
 
-export type UpdateStatus = '' | 'updating' | 'updated' | 'applying' | 'failed'
+export type UpdateStatus = '' | 'updating' | 'updated' | 'applying' | 'applied' | 'failed'
 
 type Props = {
   status: UpdateStatus
@@ -41,6 +41,11 @@ export function UpdateBanner({ status, minver, error, onApply }: Props) {
   return (
     <View style={styles.banner}>
       {status === 'updating' && <Text style={styles.text}>Updating...</Text>}
+      {status === 'applied' && (
+        <Text style={styles.text}>
+          Update applied. Close and reopen the app to finish updating.
+        </Text>
+      )}
       {status === 'failed' && <Text style={styles.text}>{error || 'Update failed'}</Text>}
       {(status === 'updated' || status === 'applying') && (
         <View style={styles.row}>

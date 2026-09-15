@@ -4,12 +4,11 @@ import RNRestart from 'react-native-restart'
 
 export async function restartAfterUpdate() {
   if (Platform.OS === 'android') {
-    if (!NativeModules.RNRestart) {
-      throw new Error('Update applied. Close and reopen the app to finish updating.')
-    }
+    if (!NativeModules.RNRestart) return false
     RNRestart.restart()
-    return
+    return true
   }
 
   await reloadAppAsync('Pear update applied')
+  return true
 }
