@@ -11,9 +11,10 @@ import {
   View
 } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
-import { reloadAppAsync } from 'expo-modules-core'
+import { reloadAppAsync, requireOptionalNativeModule } from 'expo-modules-core'
 import * as SplashScreen from 'expo-splash-screen'
 import PearRuntime from 'pear-mobile'
+import type { Worklet } from 'react-native-bare-kit'
 import FramedStream from 'framed-stream'
 import b4a from 'b4a'
 
@@ -26,8 +27,13 @@ import { GameScreen } from './screens/GameScreen'
 import { UpdateBanner, UpdateStatus } from './components/UpdateBanner'
 import { AnimatedSplash } from './components/AnimatedSplash'
 import { theme } from './theme'
+import { restartAfterUpdate } from './restart'
 
 const appName = productName ?? name
+const nativeUpdates = requireOptionalNativeModule<{ canReload: boolean }>('SnakeUpdates')
+const canReloadUpdate =
+  typeof globalThis.expo?.reloadAppAsync === 'function' &&
+  (Platform.OS === 'ios' || (Platform.OS === 'android' && nativeUpdates?.canReload === true))
 
 // Hold the native splash until the AnimatedSplash overlay has painted its
 // first frame — otherwise there is a flash of bare root view in between.
@@ -53,6 +59,7 @@ export default function App() {
 
   const pipeRef = useRef<FramedStream | null>(null)
   const shouldReload = useRef(false)
+  const cancelRestart = useRef<(() => void) | null>(null)
 
   // The worker sends JSON messages; App writes JSON commands back.
   function sendToWorker(msg: unknown) {
@@ -77,7 +84,7 @@ export default function App() {
       version,
       upgrade,
       appName
-    ])
+    ]) as Worklet['IPC']
     const pipe = new FramedStream(IPC)
     pipeRef.current = pipe
 
@@ -93,8 +100,10 @@ export default function App() {
     pipe.on('error', (err) => console.error(err))
 
     return () => {
+      cancelRestart.current?.()
       game.destroy()
       pipe.destroy()
+      IPC.worklet.terminate()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -109,18 +118,20 @@ export default function App() {
         break
       case 'updateApplied':
         if (shouldReload.current) {
-          reloadAppAsync('Pear update applied').catch((err) => {
-            setError(err instanceof Error ? err.message : String(err))
-            setUpdateStatus('failed')
-          })
-        } else {
-          setUpdateStatus('')
+          shouldReload.current = false
+          setUpdateStatus('restarting')
+          cancelRestart.current?.()
+          cancelRestart.current = restartAfterUpdate(
+            canReloadUpdate ? () => reloadAppAsync('Pear update applied') : null,
+            () => setUpdateStatus('restart-required')
+          )
         }
         break
       case 'minverRequired':
         setMinver(msg.minver)
         break
       case 'updateFailed':
+        shouldReload.current = false
         setError(msg.error || '')
         setUpdateStatus('failed')
         break
@@ -177,7 +188,9 @@ export default function App() {
   }
 
   function applyUpdate() {
+    if (shouldReload.current) return
     shouldReload.current = true
+    setError('')
     setUpdateStatus('applying')
     sendToWorker({ type: 'applyUpdate' })
   }

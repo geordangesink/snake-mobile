@@ -26,7 +26,7 @@
     "production:android": "npx expo run:android --variant release",
     "lint": "lunte",
     "format": "prettier . --write",
-    "test": "prettier . --check && lunte"
+    "test": "prettier . --check && lunte && node --test tests/*.test.mjs"
   },
   "repository": {
     "type": "git",

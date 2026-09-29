@@ -9,6 +9,7 @@
     "backgroundColor": "#001601",
     "plugins": [
       ["pear-runtime-react-native"],
+      "./plugins/with-snake-updates",
       [
         "expo-build-properties",
         {
