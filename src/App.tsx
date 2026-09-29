@@ -23,7 +23,7 @@ import { version, upgrade, name, productName } from '../package.json'
 import { SnakeGame } from './game/engine'
 import { TILES, Direction } from './game/constants'
 import { SetupScreen } from './screens/SetupScreen'
-import { GameScreen } from './screens/GameScreen'
+import { GameScreen, AnnouncementStatus } from './screens/GameScreen'
 import { UpdateBanner, UpdateStatus } from './components/UpdateBanner'
 import { AnimatedSplash } from './components/AnimatedSplash'
 import { theme } from './theme'
@@ -48,7 +48,10 @@ type ScreenName = 'setup' | 'loading' | 'game'
 
 export default function App() {
   const [screen, setScreen] = useState<ScreenName>('setup')
-  const [topic, setTopic] = useState('')
+  const [joinCode, setJoinCode] = useState<{ topic: string; status: AnnouncementStatus }>({
+    topic: '',
+    status: 'announcing'
+  })
   const [peers, setPeers] = useState(0)
   const [over, setOver] = useState(false)
   const [updateStatus, setUpdateStatus] = useState<UpdateStatus>('')
@@ -136,10 +139,15 @@ export default function App() {
         setUpdateStatus('failed')
         break
       case 'ready':
-        setTopic(msg.topic)
+        setJoinCode({ topic: msg.topic, status: 'announcing' })
         game.start(msg.id, b4a.from(msg.topic, 'hex'))
         setOver(false)
         setScreen('game')
+        break
+      case 'flushed':
+        setJoinCode((current) =>
+          msg.topic === current.topic ? { ...current, status: 'online' } : current
+        )
         break
       case 'connected':
         game.addPeer(msg.id)
@@ -167,11 +175,13 @@ export default function App() {
   }
 
   function createGame() {
+    setJoinCode({ topic: '', status: 'announcing' })
     setScreen('loading')
     sendToWorker({ type: 'join', topic: null })
   }
 
   function joinGame(topicHex: string) {
+    setJoinCode({ topic: '', status: 'announcing' })
     setScreen('loading')
     sendToWorker({ type: 'join', topic: topicHex })
   }
@@ -183,7 +193,7 @@ export default function App() {
     game.leave()
     setOver(false)
     setPeers(0)
-    setTopic('')
+    setJoinCode({ topic: '', status: 'announcing' })
     setScreen('setup')
   }
 
@@ -217,7 +227,8 @@ export default function App() {
         <GameScreen
           game={game}
           size={BOARD_SIZE}
-          topic={topic}
+          topic={joinCode.topic}
+          announcement={joinCode.status}
           peers={peers}
           over={over}
           version={renderCount}
