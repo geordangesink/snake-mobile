@@ -20,16 +20,12 @@ module.exports = ({ config }) => {
     ios: {
       ...baseExpoConfig.ios,
       ...incoming.ios,
-      ...(process.env.IOS_BUNDLE_ID?.trim() && {
-        bundleIdentifier: process.env.IOS_BUNDLE_ID.trim()
-      }),
       ...(process.env.APPLE_TEAM_ID?.trim() && { appleTeamId: process.env.APPLE_TEAM_ID.trim() }),
       ...(buildNumber && { buildNumber })
     },
     android: {
       ...baseExpoConfig.android,
       ...incoming.android,
-      ...(process.env.ANDROID_PACKAGE?.trim() && { package: process.env.ANDROID_PACKAGE.trim() }),
       ...(buildNumber && { versionCode: Number(buildNumber) })
     }
   }

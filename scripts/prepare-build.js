@@ -1,30 +1,35 @@
 const fs = require('node:fs')
+const { version } = require('../package.json')
 
 const platform = process.env.BUILD_PLATFORM
-const profile = process.env.BUILD_PROFILE
-const offset = process.env.BUILD_NUMBER_OFFSET || '0'
+const run = process.env.GITHUB_RUN_NUMBER
+const attempt = process.env.GITHUB_RUN_ATTEMPT
 
-if (!['ios', 'android'].includes(platform) || !['production', 'preview'].includes(profile)) {
-  throw new Error('Select a valid build platform and profile')
+if (!['ios', 'android'].includes(platform)) throw new Error('Select ios or android')
+if (!/^(0|[1-9]\d{0,2})\.(0|[1-9]\d{0,2})\.(0|[1-9]\d{0,2})$/.test(version)) {
+  throw new Error('package.json version must be major.minor.patch with components from 0 to 999')
 }
-
-if (!/^\d+$/.test(offset)) throw new Error('BUILD_NUMBER_OFFSET must be a non-negative integer')
-
-process.env.BUILD_NUMBER =
-  process.env.BUILD_NUMBER?.trim() || String(Number(process.env.GITHUB_RUN_NUMBER) + Number(offset))
+if (!/^[1-9]\d*$/.test(run) || !/^[1-9]\d?$/.test(attempt)) {
+  throw new Error('GITHUB_RUN_NUMBER must be positive and GITHUB_RUN_ATTEMPT must be from 1 to 99')
+}
+const buildNumber = Number(run) * 100 + Number(attempt)
+if (!Number.isSafeInteger(buildNumber) || buildNumber > 2100000000) {
+  throw new Error('Build number exceeds the Android version code limit')
+}
+process.env.BUILD_NUMBER = String(buildNumber)
 
 const config = require('../app.config')({ config: {} })
 const applicationId = platform === 'ios' ? config.ios.bundleIdentifier : config.android.package
 
-if (!applicationId || (profile === 'production' && applicationId.startsWith('com.anonymous'))) {
-  throw new Error(`Set a registered ${platform} application ID in app.json or repository variables`)
+if (!applicationId || applicationId.startsWith('com.anonymous.')) {
+  throw new Error(`Set a registered ${platform} application ID in app.json`)
 }
 
 const signingSecrets =
   platform === 'ios'
     ? [
-        'BUILD_CERTIFICATE_BASE64',
-        'P12_PASSWORD',
+        'IOS_CERTIFICATE_BASE64',
+        'IOS_P12_PASSWORD',
         'IOS_PROVISIONING_PROFILE_BASE64',
         'APPLE_TEAM_ID'
       ]
@@ -41,12 +46,18 @@ for (const key of signingSecrets) {
 
 const metadata = {
   platform,
-  profile,
   applicationId,
-  version: config.version,
-  buildNumber: process.env.BUILD_NUMBER,
+  version,
+  buildNumber: String(buildNumber),
+  buildLabel: `${version
+    .split('.')
+    .map((part) => part.padStart(3, '0'))
+    .join('.')}-${run.padStart(8, '0')}.${attempt.padStart(2, '0')}`,
   ...(platform === 'android' && { versionCode: config.android.versionCode }),
-  commit: process.env.GITHUB_SHA,
+  repository: process.env.SOURCE_REPOSITORY,
+  ref: process.env.SOURCE_REF,
+  commit: process.env.SOURCE_COMMIT,
+  buildRepository: process.env.GITHUB_REPOSITORY,
   runId: process.env.GITHUB_RUN_ID
 }
 
