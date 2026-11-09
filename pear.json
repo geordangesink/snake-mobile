@@ -1,4 +1,7 @@
 {
+  "updates": {
+    "minver": "1.0.0"
+  },
   "multisig": {
     "publicKeys": [
       "6r66j69bjqfns5ims4z6c4b48c6a863mtuxqy5xmq6y6a9x3uiiy",
