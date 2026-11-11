@@ -3,6 +3,13 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+for variable in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+  if [[ -z "${!variable:-}" ]]; then
+    echo "Missing environment variable: $variable" >&2
+    exit 1
+  fi
+done
+
 signing_dir="$(mktemp -d "$RUNNER_TEMP/android-signing.XXXXXX")"
 trap 'rm -rf "$signing_dir"' EXIT
 export ANDROID_KEYSTORE_PATH="$signing_dir/upload.keystore"

@@ -73,7 +73,7 @@ In development (`npm run ios` / `npm run android`) the app passes `__DEV__` to t
 
 ## Releases
 
-iOS and Android builds, signing, artifacts, store publishing, and Pear update builds run in [holepunchto/pear-snake-ci-build](https://github.com/holepunchto/pear-snake-ci-build). See [Releasing](https://github.com/holepunchto/pear-snake-ci-build/blob/main/RELEASING.md) for the workflows and central secrets setup.
+Build and signing scripts live in this repository. [holepunchto/pear-snake-ci-build](https://github.com/holepunchto/pear-snake-ci-build) calls them with credentials from its protected `release` environment and handles artifacts, store publishing, and Pear update builds. Secret values belong only in that CI environment, never in this repository. See [Releasing](https://github.com/holepunchto/pear-snake-ci-build/blob/main/RELEASING.md) for setup.
 
 ## OTA updates & deploy
 
