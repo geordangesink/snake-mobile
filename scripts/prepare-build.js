@@ -25,25 +25,6 @@ if (!applicationId || applicationId.startsWith('com.anonymous.')) {
   throw new Error(`Set a registered ${platform} application ID in app.json`)
 }
 
-const signingSecrets =
-  platform === 'ios'
-    ? [
-        'IOS_CERTIFICATE_BASE64',
-        'IOS_P12_PASSWORD',
-        'IOS_PROVISIONING_PROFILE_BASE64',
-        'APPLE_TEAM_ID'
-      ]
-    : [
-        'ANDROID_KEYSTORE_BASE64',
-        'ANDROID_KEYSTORE_PASSWORD',
-        'ANDROID_KEY_ALIAS',
-        'ANDROID_KEY_PASSWORD'
-      ]
-
-for (const key of signingSecrets) {
-  if (!process.env[key]) throw new Error(`Missing signing secret: ${key}`)
-}
-
 const metadata = {
   platform,
   applicationId,
