@@ -28,7 +28,7 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "to.holepunch.snake"
+      "bundleIdentifier": "com.pearsnake.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -36,7 +36,7 @@
         "backgroundColor": "#001601"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "to.holepunch.snake"
+      "package": "com.pearsnake.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
